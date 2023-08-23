@@ -4,6 +4,7 @@ module.exports = (app, server, io) => {
     // add new User
     socket.on('new-user-add', (newUser) => {
       // if user is not added previously
+      socket.join(newUser.room)
       if (!activeUsers.some((user) => user.id === newUser.id) && newUser.name) {
         activeUsers.push({
           ...newUser,
@@ -16,36 +17,36 @@ module.exports = (app, server, io) => {
         })
       }
       // // send all active users to new user
-      io.emit('get-users', activeUsers)
+      io.to(newUser.room).emit('get-users', activeUsers)
     })
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', (room) => {
       // remove user from active users
       activeUsers = activeUsers.filter((user) => user.socketId !== socket.id)
-      io.emit('get-users', activeUsers)
+      io.to(room).emit('get-users', activeUsers)
     })
 
-    socket.on('offline', () => {
+    socket.on('offline', (room) => {
       // remove user from active users
       activeUsers = activeUsers.filter((user) => user.socketId !== socket.id)
       // send all active users to all users
-      io.emit('get-users', activeUsers)
+      io.to(room).emit('get-users', activeUsers)
     })
 
     // typing status
-    socket.on('new-vote', (data) => {
+    socket.on('new-vote', (data, room) => {
       const userIndex = activeUsers.findIndex((user) => user.id === data.id)
       activeUsers[userIndex] = { ...data, socketId: socket.id }
-      io.emit('new-vote', activeUsers)
+      io.to(room).emit('new-vote', activeUsers)
     })
 
-    socket.on('change-point-visibility', (data) => {
-      io.emit('change-point-visibility', data)
+    socket.on('change-point-visibility', (data, room) => {
+      io.to(room).emit('change-point-visibility', data)
     })
 
-    socket.on('reset-scores', (data) => {
+    socket.on('reset-scores', (room) => {
       activeUsers = resetAllVotes(activeUsers)
-      io.emit('reset-scores', activeUsers)
+      io.to(room).emit('reset-scores', activeUsers)
     })
   })
 }
