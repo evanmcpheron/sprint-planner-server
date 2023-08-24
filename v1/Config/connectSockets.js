@@ -20,17 +20,17 @@ module.exports = (app, server, io) => {
       io.to(newUser.room).emit('get-users', activeUsers)
     })
 
-    socket.on('disconnect', (room) => {
+    socket.on('disconnect', () => {
       // remove user from active users
       activeUsers = activeUsers.filter((user) => user.socketId !== socket.id)
-      io.to(room).emit('get-users', activeUsers)
+      io.emit('get-users', activeUsers)
     })
 
-    socket.on('offline', (room) => {
+    socket.on('offline', () => {
       // remove user from active users
       activeUsers = activeUsers.filter((user) => user.socketId !== socket.id)
       // send all active users to all users
-      io.to(room).emit('get-users', activeUsers)
+      io.emit('get-users', activeUsers)
     })
 
     // typing status
